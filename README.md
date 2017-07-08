@@ -1,4 +1,4 @@
-# ramses-auth
+# ramses-auth [![Travis](https://img.shields.io/travis/KorbinianKuhn/ramses-auth.svg)](https://travis-ci.org/KorbinianKuhn/ramses-auth/builds)  [![standard](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](http://standardjs.com/)
 
 #### Implementation of RAMSES - Robust Access Model for Securing Exposed Services
 
