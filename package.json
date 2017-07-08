@@ -1,0 +1,40 @@
+{
+  "name": "ramses-auth",
+  "version": "1.0.0",
+  "description": "RAMSES - Robust Access Model for Securing Exposed Services",
+  "main": "index.js",
+  "scripts": {
+    "precoverage": "rm -rf coverage",
+    "coverage": "NODE_ENV=test istanbul cover tape -- test/**/*.spec.js",
+    "lint": "standard",
+    "start": "watch 'npm test' src test --wait 5 --interval 1",
+    "test": "NODE_ENV=test tape test/**/*.spec.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/KorbinianKuhn/ramses-auth.git"
+  },
+  "keywords": [
+    "ramses",
+    "authentication",
+    "authorization",
+    "jws",
+    "jwt",
+    "security",
+    "microservices",
+    "web",
+    "signatures"
+  ],
+  "author": "",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "jws": "^3.1.4",
+    "node-rsa": "^0.4.2",
+    "uuid": "^3.1.0"
+  },
+  "devDependencies": {
+    "tape": "^4.7.0",
+    "istanbul": "^0.4.5"
+  }
+}
