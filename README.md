@@ -5,10 +5,9 @@
 1. [Introduction](#introduction)
 2. [Installation](#installation)
 3. [Usage](#usage)
-4. [Example](#example)
-5. [Testing](#testing)
-6. [Contribution](#contribution)
-7. [License](#license)
+4. [Testing](#testing)
+5. [Contribution](#contribution)
+6. [License](#license)
 
 ## Introduction
 
@@ -182,7 +181,7 @@ Options:
 - `azp` - Define the authorized party that has to exist in the tickets `azp` claim.
 
 Example:
-
+gi
 ``` js
 //Validate a ticket
 let isValud = ramses.validate(
