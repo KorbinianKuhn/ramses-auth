@@ -52,12 +52,12 @@ test('ramses.sign(): jti', function (t) {
   t.end();
 });
 
-test('ramses.sign(): exp', function (t) {
+test('ramses.sign(): lifetime', function (t) {
   const payload = {
     "key": "value"
   }
   const ticket = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    exp: true
+    lifetime: 300
   });
 
   const decodedTicket = ramses.decode(ticket);

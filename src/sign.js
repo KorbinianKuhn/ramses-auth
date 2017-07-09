@@ -22,8 +22,8 @@ function sign(payload, key, options = {}) {
     payload.jti = uuidv4();
   }
 
-  if (options.exp) {
-    payload.exp = Math.floor(new Date().getTime() / 1000) + options.exp;
+  if (options.lifetime) {
+    payload.exp = Math.floor(new Date().getTime() / 1000) + options.lifetime;
   }
 
   if (options.jpi) {
