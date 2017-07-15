@@ -11,6 +11,17 @@
 
 ## Introduction
 
+RAMSES is an easily adoptable, customizable and
+robust security model which will not consider any trusted
+zones. It proposes an authentication and authorization pattern
+for inter-service communication utilizing and extending JSON
+Web Signatures (JWS) as tickets. RAMSES includes various
+extensions for individual security levels and requirements, like
+access capabilities, ticket invalidation, usage limitation and
+payload encryption.
+
+Click [here](https://github.com/KorbinianKuhn/ramses) for a detailed explanation of RAMSES.
+
 ## Installation
 
 For installation use the [Node Package Manager](https://github.com/npm/npm):
@@ -39,17 +50,17 @@ Options:
 
 - `alg {string}` - Parameter name for describing the algorithm<br>Default: `RS256`
 - `jti {boolean}` - Add a unique JWT ID (uuidv4).
-- `lifetime {number}` - Lifetime Add an expiration time. The value will be added to the current time.
+- `lifetime {number}` - Lifetime of the ticket. The value will be added to the current time and stored as expiration time under the `exp` claim.
 - `jpi {string}`
-    - `type {string}` - Values (root, parent, chain)
+    - `type {string}` - Values (root, parent, chain).
     - `parent {Object}` - The parent ticket as JWS.
-- `encrypt (Array[Object])` - An array of objects that have to contain the following claims.
+- `encrypt (Array[Object])` - An array of objects that have to contain the following claims:
     - `aud {Array[string]}` - The audience or audiences that the encryption is meant for.
     - `alg {string}` - The encryption algorithm.
     - `content {Object}` - The content that will be encrypted.
     - `key {Object}` - The public key of the audience defined in the `aud` claim.
 
-`alg` must be one a value found in `ramses.ALGORITHMS`. See above for a table of supported algorithms. If `payload` is not a buffer or a string, it will be coerced into a string using `JSON.stringify`.
+`alg` must be one a value found in `ramses.ALGORITHMS`. If `payload` is not a buffer or a string, it will be coerced into a string using `JSON.stringify`.
 
 Example:
 
@@ -143,7 +154,7 @@ Options:
 `options`
 
 - `decrypt {object}` - Automatic decryption of encrypted payload data `epd` if existent and the audience matches.
-    - `aud {String}` - The audience that have to be part of `epd`
+    - `aud {String}` - The audience that has to be part of `epd` claim.
     - `key {String}` - The private key for decryption.
 
 Example:
@@ -181,7 +192,7 @@ Options:
 - `azp` - Define the authorized party that has to exist in the tickets `azp` claim.
 
 Example:
-gi
+
 ``` js
 //Validate a ticket
 let isValud = ramses.validate(
@@ -234,7 +245,7 @@ Do not forget to add corresponding tests to keep up 100% test coverage.
 ## License
 The MIT License
 
-Copyright (c) 2017 Korbinian Kuhn
+Copyright (c) 2017 Korbinian Kuhn, Tobias Eberle, Korbinian Kuhn, Steffen Mauser, Marc Schelling, Christof Kost
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
