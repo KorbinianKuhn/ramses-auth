@@ -20,7 +20,7 @@ extensions for individual security levels and requirements, like
 access capabilities, ticket invalidation, usage limitation and
 payload encryption.
 
-Click [here](https://github.com/KorbinianKuhn/ramses) for a detailed explanation of RAMSES.
+A detailed explanation of RAMSES will follow.
 
 ## Installation
 
