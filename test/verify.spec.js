@@ -7,6 +7,8 @@ const payload = {
 }
 
 test('ramses.verify()', function (t) {
+  t.notOk(ramses.verify('wrong', keys.rsaPublicKey), 'wrong token should not verify');
+
   const ticket = ramses.sign(payload, keys.rsaPrivateKey);
 
   t.ok(ramses.verify(ticket, keys.rsaPublicKey), 'correct key should verify');

@@ -4,7 +4,11 @@ const error = require('./error');
 
 function verify(ticket, key, options = {}) {
   if (!options.alg) {
-    var algorithm = decode(ticket).header.alg;
+    const decodedTicket = decode(ticket);
+    if (decodedTicket === null) {
+      return false;
+    }
+    var algorithm = decodedTicket.header.alg;
   } else {
     var algorithm = options.alg;
   }
