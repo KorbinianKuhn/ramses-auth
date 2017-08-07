@@ -25,7 +25,7 @@
     "web",
     "signatures"
   ],
-  "author": "",
+  "author": "Korbinian Kuhn",
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
