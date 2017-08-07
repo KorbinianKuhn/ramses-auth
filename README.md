@@ -50,10 +50,10 @@ Options:
 
 - `alg {string}` - Parameter name for describing the algorithm<br>Default: `RS256`
 - `jti {boolean}` - Add a unique JWT ID (uuidv4).
-- `lifetime {number}` - Lifetime of the ticket. The value will be added to the current time and stored as expiration time under the `exp` claim.
+- `lifetime {number}` - Lifetime of the token. The value will be added to the current time and stored as expiration time under the `exp` claim.
 - `jpi {string}`
     - `type {string}` - Values (root, parent, chain).
-    - `parent {Object}` - The parent ticket as JWS.
+    - `parent {Object}` - The parent token as JWS.
 - `encrypt (Array[Object])` - An array of objects that have to contain the following claims:
     - `aud {Array[string]}` - The audience or audiences that the encryption is meant for.
     - `alg {string}` - The encryption algorithm.
@@ -65,8 +65,8 @@ Options:
 Example:
 
 ``` js
-//Sign a ticket with a unique id and a lifetime of 5 minutes
-const exampleTicket = ramses.sign(
+//Sign a token with a unique id and a lifetime of 5 minutes
+const token = ramses.sign(
     payload: {
         key:'value'
     },
@@ -77,8 +77,8 @@ const exampleTicket = ramses.sign(
     }
 )
 
-//Sign a ticket with a parent
-const childTicket = ramses.sign(
+//Sign a token with a parent
+const tokenWithParent = ramses.sign(
     payload: {
         key:'value'
     },
@@ -86,13 +86,13 @@ const childTicket = ramses.sign(
     options: {
         jti: true,
         jpi: {
-            parent: exampleTicket
+            parent: token
         }
     }
 )
 
-//Sign a ticket with encrypted content for the audience
-const anotherTicket = ramses.sign(
+//Sign a token with encrypted content for the audience
+const token = ramses.sign(
     payload: {
         aud: ['Audience']
     },
@@ -111,14 +111,14 @@ const anotherTicket = ramses.sign(
 )
 ```
 
-#### `ramses.verify(ticket, key, options)`
+#### `ramses.verify(token, key, options)`
 
-Verify a JWS ticket. Returns `true` or `false`.
+Verify a JWS token. Returns `true` or `false`.
 
 Options:
 
-- `ticket {String}` - The ticket as JWS.
-- `key {String}` - The public key of ticket issuer.
+- `token {String}` - The token as JWS.
+- `key {String}` - The public key of token issuer.
 
 `options`
 
@@ -127,15 +127,15 @@ Options:
 Example:
 
 ``` js
-//Verify exampleTicket
-const ticket = ramses.verify(
-    ticket: exampleTicket,
+//Verify token
+const valid = ramses.verify(
+    token: token,
     key: issuer.publicKey
 )
 
-//Verify exampleTicket and set algorithm for better performance
-const ticket = ramses.verify(
-    ticket: exampleTicket,
+//Verify token and set algorithm for better performance
+const valid = ramses.verify(
+    token: token,
     key: issuer.publicKey,
     options: {
         alg: 'RS256'
@@ -143,13 +143,13 @@ const ticket = ramses.verify(
 )
 ```
 
-#### `ramses.decode(ticket, options)`
+#### `ramses.decode(token, options)`
 
 Return a decoded JWS. The returned object contains `header`, `payload` and `signature`.
 
 Options:
 
-`ticket {String}` - The ticket as JWS.
+`token {String}` - The token as JWS.
 
 `options`
 
@@ -160,14 +160,14 @@ Options:
 Example:
 
 ``` js
-//Decode a ticket
-const decodedTicket = ramses.decode(
-    ticket: exampleTicket
+//Decode a token
+const dtoken = ramses.decode(
+    token: token
 )
 
-//Decode and automatically decrypt epd content of a ticket
-const decodedTicket = ramses.decode(
-    ticket: exampleTicket,
+//Decode and automatically decrypt epd content of a token
+const dtoken = ramses.decode(
+    token: token,
     options: {
         decrypt: {
             aud: 'Audience',
@@ -177,32 +177,32 @@ const decodedTicket = ramses.decode(
 )
 ```
 
-#### `ramses.validate(ticket, key, options)`
+#### `ramses.validate(token, key, options)`
 
-Validate a ticket. Returns `true` or `false`.
+Validate a token. Returns `true` or `false`.
 
 Options:
 
-- `ticket {String}` - The ticket as JWS.
-- `key {String}` - The public key of ticket issuer.
+- `token {String}` - The token as JWS.
+- `key {String}` - The public key of token issuer.
 
 `options`
 
-- `aud` - Define the audience that has to exist in the tickets `aud` claim.
-- `azp` - Define the authorized party that has to exist in the tickets `azp` claim.
+- `aud` - Define the audience that has to exist in the tokens `aud` claim.
+- `azp` - Define the authorized party that has to exist in the tokens `azp` claim.
 
 Example:
 
 ``` js
-//Validate a ticket
-let isValud = ramses.validate(
-    ticket: exampleTicket,
+//Validate a token
+let isValid = ramses.validate(
+    token: token,
     key: issuer.publicKey
 )
 
-//Validate a ticket and check audience and authorized party
+//Validate a token and check audience and authorized party
 let isValid = ramses.validate(
-    ticket: exampleTicket,
+    token: token,
     key: issuer.publicKey,
     options: {
         aud: 'Audience',

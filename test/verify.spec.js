@@ -9,10 +9,10 @@ const payload = {
 test('ramses.verify()', function (t) {
   t.notOk(ramses.verify('wrong', keys.rsaPublicKey), 'wrong token should not verify');
 
-  const ticket = ramses.sign(payload, keys.rsaPrivateKey);
+  const token = ramses.sign(payload, keys.rsaPrivateKey);
 
-  t.ok(ramses.verify(ticket, keys.rsaPublicKey), 'correct key should verify');
-  t.notOk(ramses.verify(ticket, keys.rsaWrongPublicKey), 'wrong key should not verify');
+  t.ok(ramses.verify(token, keys.rsaPublicKey), 'correct key should verify');
+  t.notOk(ramses.verify(token, keys.rsaWrongPublicKey), 'wrong key should not verify');
   t.end();
 });
 
@@ -20,14 +20,14 @@ test('ramses.verify(): alg', function (t) {
   const correctAlgorithm = 'RS256';
   const wrongAlgorithm = 'RS384';
 
-  const ticket = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const token = ramses.sign(payload, keys.rsaPrivateKey, options = {
     alg: correctAlgorithm
   });
 
-  t.ok(ramses.verify(ticket, keys.rsaPublicKey, options = {
+  t.ok(ramses.verify(token, keys.rsaPublicKey, options = {
     alg: correctAlgorithm
   }), 'correct algorithm should verify');
-  t.notOk(ramses.verify(ticket, keys.rsaPublicKey, options = {
+  t.notOk(ramses.verify(token, keys.rsaPublicKey, options = {
     alg: wrongAlgorithm
   }), 'wrong algorithm should not verify');
   t.end();

@@ -4,15 +4,14 @@ const keys = require('./keys/keys')
 
 const ALGORITHMS = ramses.ALGORITHMS;
 
-
 test('ramses.sign()', function (t) {
   const payload = {
     "key": "value"
   }
-  const ticket = ramses.sign(payload, keys.rsaPrivateKey);
+  const token = ramses.sign(payload, keys.rsaPrivateKey);
 
-  t.ok(ramses.decode(ticket), 'correct key should decode');
-  t.ok(ramses.verify(ticket, keys.rsaPublicKey), 'correct key should verify');
+  t.ok(ramses.decode(token), 'correct key should decode');
+  t.ok(ramses.verify(token, keys.rsaPublicKey), 'correct key should verify');
   t.end();
 });
 
@@ -21,11 +20,11 @@ ALGORITHMS.forEach(function (alg) {
     const payload = {
       "key": "value"
     }
-    const ticket = ramses.sign(payload, keys.rsaPrivateKey, options = {
+    const token = ramses.sign(payload, keys.rsaPrivateKey, options = {
       alg: alg
     });
 
-    t.ok(ramses.verify(ticket, keys.rsaPublicKey, algorithm = alg)), 'should verify';
+    t.ok(ramses.verify(token, keys.rsaPublicKey, algorithm = alg)), 'should verify';
     t.throws(function () {
       ramses.sign(payload, keys.rsaPrivateKey, options = {
         alg: 'invalidAlgorithm'
@@ -39,15 +38,15 @@ test('ramses.sign(): jti', function (t) {
   const payload = {
     "key": "value"
   }
-  const ticket = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const token = ramses.sign(payload, keys.rsaPrivateKey, options = {
     jti: true
   });
 
-  const decodedTicket = ramses.decode(ticket);
-  t.ok(('jti' in decodedTicket.payload), 'jti should exist in payload');
+  const dtoken = ramses.decode(token);
+  t.ok(('jti' in dtoken.payload), 'jti should exist in payload');
 
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  t.ok(decodedTicket.payload.jti.match(uuidPattern), 'jti should match uuid pattern');
+  t.ok(dtoken.payload.jti.match(uuidPattern), 'jti should match uuid pattern');
 
   t.end();
 });
@@ -56,13 +55,13 @@ test('ramses.sign(): lifetime', function (t) {
   const payload = {
     "key": "value"
   }
-  const ticket = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const token = ramses.sign(payload, keys.rsaPrivateKey, options = {
     lifetime: 300
   });
 
-  const decodedTicket = ramses.decode(ticket);
+  const dtoken = ramses.decode(token);
 
-  t.ok(('exp' in decodedTicket.payload), 'exp should exist in payload');
+  t.ok(('exp' in dtoken.payload), 'exp should exist in payload');
 
   t.end();
 });
@@ -71,33 +70,33 @@ test('ramses.sign(): jpi', function (t) {
   const payload = {
     "key": "value"
   }
-  const rootTicket = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const tokenRoot = ramses.sign(payload, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {}
   });
-  const childTicketA = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const tokenChildA = ramses.sign(payload, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {
-      parent: rootTicket
+      parent: tokenRoot
     }
   });
-  const childTicketB = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const tokenChildB = ramses.sign(payload, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {
-      parent: childTicketA
+      parent: tokenChildA
     }
   });
 
-  const decodedRootTicket = ramses.decode(rootTicket);
-  const decodedChildTicketA = ramses.decode(childTicketA);
-  const decodedChildTicketB = ramses.decode(childTicketB);
+  const dtokenRoot = ramses.decode(tokenRoot);
+  const dtokenChildA = ramses.decode(tokenChildA);
+  const dtokenChildB = ramses.decode(tokenChildB);
 
-  t.ok((decodedRootTicket.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
-  t.ok((decodedChildTicketA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
-  t.ok((decodedChildTicketB.payload.jpi.length == 2), 'length of jpi array of childB ticket should be 2');
+  t.ok((dtokenRoot.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
+  t.ok((dtokenChildA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
+  t.ok((dtokenChildB.payload.jpi.length == 2), 'length of jpi array of childB ticket should be 2');
 
-  t.ok((decodedChildTicketA.payload.jpi[0] === decodedRootTicket.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
-  t.ok((decodedChildTicketB.payload.jpi[0] === decodedRootTicket.payload.jti && decodedChildTicketB.payload.jpi[1] === decodedChildTicketA.payload.jti), 'uuids of jpi of childB shoud be uuid of root ticket and childA ticket');
+  t.ok((dtokenChildA.payload.jpi[0] === dtokenRoot.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
+  t.ok((dtokenChildB.payload.jpi[0] === dtokenRoot.payload.jti && dtokenChildB.payload.jpi[1] === dtokenChildA.payload.jti), 'uuids of jpi of childB shoud be uuid of root ticket and childA ticket');
 
   t.end();
 });
@@ -106,37 +105,37 @@ test('ramses.sign(): jpi, type=root', function (t) {
   const payload = {
     "key": "value"
   }
-  const rootTicket = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const tokenRoot = ramses.sign(payload, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {
       type: 'root'
     }
   });
-  const childTicketA = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const tokenChildA = ramses.sign(payload, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {
       type: 'root',
-      parent: rootTicket
+      parent: tokenRoot
     }
   });
-  const childTicketB = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const tokenChildB = ramses.sign(payload, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {
       type: 'root',
-      parent: childTicketA
+      parent: tokenChildA
     }
   });
 
-  const decodedRootTicket = ramses.decode(rootTicket);
-  const decodedChildTicketA = ramses.decode(childTicketA);
-  const decodedChildTicketB = ramses.decode(childTicketB);
+  const dtokenRoot = ramses.decode(tokenRoot);
+  const dtokenChildA = ramses.decode(tokenChildA);
+  const dtokenChildB = ramses.decode(tokenChildB);
 
-  t.ok((decodedRootTicket.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
-  t.ok((decodedChildTicketA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
-  t.ok((decodedChildTicketB.payload.jpi.length == 1), 'length of jpi array of childB ticket should be 1');
+  t.ok((dtokenRoot.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
+  t.ok((dtokenChildA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
+  t.ok((dtokenChildB.payload.jpi.length == 1), 'length of jpi array of childB ticket should be 1');
 
-  t.ok((decodedChildTicketA.payload.jpi[0] === decodedRootTicket.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
-  t.ok((decodedChildTicketB.payload.jpi[0] === decodedRootTicket.payload.jti), 'uuid of jpi of childB shoud be uuid of root ticket');
+  t.ok((dtokenChildA.payload.jpi[0] === dtokenRoot.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
+  t.ok((dtokenChildB.payload.jpi[0] === dtokenRoot.payload.jti), 'uuid of jpi of childB shoud be uuid of root ticket');
 
   t.end();
 });
@@ -145,44 +144,44 @@ test('ramses.sign(): jpi, type=parent', function (t) {
   const payload = {
     "key": "value"
   }
-  const rootTicket = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const tokenRoot = ramses.sign(payload, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {
       type: 'parent'
     }
   });
-  const childTicketA = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const tokenChildA = ramses.sign(payload, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {
       type: 'parent',
-      parent: rootTicket
+      parent: tokenRoot
     }
   });
-  const childTicketB = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const tokenChildB = ramses.sign(payload, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {
       type: 'parent',
-      parent: childTicketA
+      parent: tokenChildA
     }
   });
 
-  const decodedRootTicket = ramses.decode(rootTicket);
-  const decodedChildTicketA = ramses.decode(childTicketA);
-  const decodedChildTicketB = ramses.decode(childTicketB);
+  const dtokenRoot = ramses.decode(tokenRoot);
+  const dtokenChildA = ramses.decode(tokenChildA);
+  const dtokenChildB = ramses.decode(tokenChildB);
 
-  t.ok((decodedRootTicket.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
-  t.ok((decodedChildTicketA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
-  t.ok((decodedChildTicketB.payload.jpi.length == 1), 'length of jpi array of childB ticket should be 1');
+  t.ok((dtokenRoot.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
+  t.ok((dtokenChildA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
+  t.ok((dtokenChildB.payload.jpi.length == 1), 'length of jpi array of childB ticket should be 1');
 
-  t.ok((decodedChildTicketA.payload.jpi[0] === decodedRootTicket.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
-  t.ok((decodedChildTicketB.payload.jpi[0] === decodedChildTicketA.payload.jti), 'uuid of jpi of childB shoud be uuid of childA ticket');
+  t.ok((dtokenChildA.payload.jpi[0] === dtokenRoot.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
+  t.ok((dtokenChildB.payload.jpi[0] === dtokenChildA.payload.jti), 'uuid of jpi of childB shoud be uuid of childA ticket');
 
   t.end();
 });
 
 test('ramses.sign(): jpi, type=chain', function (t) {
 
-  const rootTicket = ramses.sign({
+  const tokenRoot = ramses.sign({
     "key": "value"
   }, keys.rsaPrivateKey, options = {
     jti: true,
@@ -190,53 +189,53 @@ test('ramses.sign(): jpi, type=chain', function (t) {
       type: 'chain'
     }
   });
-  const childTicketA = ramses.sign({
+  const tokenChildA = ramses.sign({
     "key": "value"
   }, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {
       type: 'chain',
-      parent: rootTicket
+      parent: tokenRoot
     }
   });
-  const childTicketB = ramses.sign({
+  const tokenChildB = ramses.sign({
     "key": "value"
   }, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {
       type: 'chain',
-      parent: childTicketA
+      parent: tokenChildA
     }
   });
-  const parentWithoutJpi = ramses.sign({
+  const tokenParentWithoutJpi = ramses.sign({
     "key": "value"
   }, keys.rsaPrivateKey, options = {
     jti: true
   });
-  const childTicketC = ramses.sign({
+  const tokenChildC = ramses.sign({
     "key": "value"
   }, keys.rsaPrivateKey, options = {
     jti: true,
     jpi: {
       type: 'chain',
-      parent: parentWithoutJpi
+      parent: tokenParentWithoutJpi
     }
   });
 
-  const decodedRootTicket = ramses.decode(rootTicket);
-  const decodedChildTicketA = ramses.decode(childTicketA);
-  const decodedChildTicketB = ramses.decode(childTicketB);
-  const decodedParentWithoutJpi = ramses.decode(parentWithoutJpi);
-  const decodedChildTicketC = ramses.decode(childTicketC);
+  const dtokenRoot = ramses.decode(tokenRoot);
+  const dtokenChildA = ramses.decode(tokenChildA);
+  const dtokenChildB = ramses.decode(tokenChildB);
+  const dtokenParentWithoutJpi = ramses.decode(tokenParentWithoutJpi);
+  const dtokenChildC = ramses.decode(tokenChildC);
 
-  t.ok((decodedRootTicket.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
-  t.ok((decodedChildTicketA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
-  t.ok((decodedChildTicketB.payload.jpi.length == 2), 'length of jpi array of childB ticket should be 2');
-  t.ok((decodedChildTicketC.payload.jpi.length == 1), 'length of jpi array of childC ticket should be 1');
+  t.ok((dtokenRoot.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
+  t.ok((dtokenChildA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
+  t.ok((dtokenChildB.payload.jpi.length == 2), 'length of jpi array of childB ticket should be 2');
+  t.ok((dtokenChildC.payload.jpi.length == 1), 'length of jpi array of childC ticket should be 1');
 
-  t.ok((decodedChildTicketA.payload.jpi[0] === decodedRootTicket.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
-  t.ok((decodedChildTicketB.payload.jpi[0] === decodedRootTicket.payload.jti && decodedChildTicketB.payload.jpi[1] === decodedChildTicketA.payload.jti), 'uuids of jpi of childB shoud be uuid of root ticket and childA ticket');
-  t.ok((decodedChildTicketC.payload.jpi[0] === decodedParentWithoutJpi.payload.jti), 'uuid of jpi of childC shoud be uuid of parent without jpi ticket');
+  t.ok((dtokenChildA.payload.jpi[0] === dtokenRoot.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
+  t.ok((dtokenChildB.payload.jpi[0] === dtokenRoot.payload.jti && dtokenChildB.payload.jpi[1] === dtokenChildA.payload.jti), 'uuids of jpi of childB shoud be uuid of root ticket and childA ticket');
+  t.ok((dtokenChildC.payload.jpi[0] === dtokenParentWithoutJpi.payload.jti), 'uuid of jpi of childC shoud be uuid of parent without jpi ticket');
 
   t.end();
 });
@@ -245,7 +244,7 @@ test('ramses.sign(): jpi, throw errors', function (t) {
   const payload = {
     "key": "value"
   }
-  const ticketWithoutJti = ramses.sign(payload, keys.rsaPrivateKey);
+  const tokenWithoutJti = ramses.sign(payload, keys.rsaPrivateKey);
 
   t.throws(function () {
     ramses.sign(payload, keys.rsaPrivateKey, options = {
@@ -266,7 +265,7 @@ test('ramses.sign(): jpi, throw errors', function (t) {
     ramses.sign(payload, keys.rsaPrivateKey, options = {
       jpi: {
         type: 'parent',
-        parent: ticketWithoutJti
+        parent: tokenWithoutJti
       }
     });
   });
@@ -274,7 +273,7 @@ test('ramses.sign(): jpi, throw errors', function (t) {
     ramses.sign(payload, keys.rsaPrivateKey, options = {
       jpi: {
         type: 'root',
-        parent: ticketWithoutJti
+        parent: tokenWithoutJti
       }
     });
   });
@@ -282,7 +281,7 @@ test('ramses.sign(): jpi, throw errors', function (t) {
     ramses.sign(payload, keys.rsaPrivateKey, options = {
       jpi: {
         type: 'chain',
-        parent: ticketWithoutJti
+        parent: tokenWithoutJti
       }
     });
   });
@@ -294,7 +293,7 @@ test('ramses.sign(): encrypt', function (t) {
   const payload = {
     "key": "value"
   }
-  const ticket = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const token = ramses.sign(payload, keys.rsaPrivateKey, options = {
     encrypt: [{
       aud: ['Audience'],
       alg: 'RSA',
@@ -303,14 +302,14 @@ test('ramses.sign(): encrypt', function (t) {
     }]
   });
 
-  const decodedTicket = ramses.decode(ticket, options = {
+  const dtoken = ramses.decode(token, options = {
     decrypt: {
       aud: 'Audience',
       key: keys.rsaPrivateKey
     }
   });
 
-  t.ok(decodedTicket.payload.epd[0].dct === 'correct message', 'dct should exist in epd');
+  t.ok(dtoken.payload.epd[0].dct === 'correct message', 'dct should exist in epd');
   t.end();
 });
 
@@ -319,7 +318,7 @@ test('ramses.sign(): encrypt', function (t) {
     "key": "value"
   }
 
-  const wrongEncodedTicket = ramses.sign(payload, keys.rsaPrivateKey, options = {
+  const tokenWrong = ramses.sign(payload, keys.rsaPrivateKey, options = {
     encrypt: [{
       aud: ['Audience'],
       alg: 'wrongAlgorithm',
@@ -328,13 +327,13 @@ test('ramses.sign(): encrypt', function (t) {
     }]
   });
 
-  const wrongDecodedTicket = ramses.decode(wrongEncodedTicket, options = {
+  const dtokenWrong = ramses.decode(tokenWrong, options = {
     decrypt: {
       aud: 'Audience',
       key: keys.rsaPrivateKey
     }
   });
 
-  t.ok(!wrongDecodedTicket.payload.epd, 'no epd should exist');
+  t.ok(!dtokenWrong.payload.epd, 'no epd should exist');
   t.end();
 });

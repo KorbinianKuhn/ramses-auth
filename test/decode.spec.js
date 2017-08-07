@@ -11,23 +11,23 @@ test('ramses.decode()', function (t) {
       ect: "1asdknaslkndaskdnas"
     }]
   }
-  const ticket = ramses.sign(payload, keys.rsaPrivateKey);
+  const token = ramses.sign(payload, keys.rsaPrivateKey);
 
-  t.ok(ramses.decode(ticket, options = {
+  t.ok(ramses.decode(token, options = {
     decrypt: {
       aud: 'Audience',
       key: keys.rsaPublicKey
     }
   }), 'correct decryption data should validate');
   t.throws(function () {
-    ramses.decode(ticket, options = {
+    ramses.decode(token, options = {
       decrypt: {
         key: keys.rsaPublicKey
       }
     });
   });
   t.throws(function () {
-    ramses.decode(ticket, options = {
+    ramses.decode(token, options = {
       decrypt: {
         aud: 'Audience'
       }

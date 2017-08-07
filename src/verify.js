@@ -2,19 +2,19 @@ const jwa = require('jwa');
 const decode = require('./decode');
 const error = require('./error');
 
-function verify(ticket, key, options = {}) {
+function verify(token, key, options = {}) {
   if (!options.alg) {
-    const decodedTicket = decode(ticket);
-    if (decodedTicket === null) {
+    const dtoken = decode(token);
+    if (dtoken === null) {
       return false;
     }
-    var algorithm = decodedTicket.header.alg;
+    var algorithm = dtoken.header.alg;
   } else {
     var algorithm = options.alg;
   }
 
-  const content = ticket.split('.', 2).join('.');
-  const signature = ticket.split('.')[2];
+  const content = token.split('.', 2).join('.');
+  const signature = token.split('.')[2];
 
   const algo = jwa(algorithm);
   return algo.verify(content, signature, key);
