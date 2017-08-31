@@ -1,6 +1,6 @@
 {
   "name": "ramses-auth",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "RAMSES - Robust Access Model for Securing Exposed Services",
   "main": "index.js",
   "scripts": {
