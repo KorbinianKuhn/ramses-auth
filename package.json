@@ -34,7 +34,7 @@
     "uuid": "^3.1.0"
   },
   "devDependencies": {
-    "tape": "^4.7.0",
-    "istanbul": "^0.4.5"
+    "istanbul": "^0.4.5",
+    "tape": "^4.8.0"
   }
 }
