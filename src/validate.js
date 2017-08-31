@@ -24,7 +24,12 @@ function validate(token, key, options = {}) {
   if (options.azp && (!dtoken.payload.azp || dtoken.payload.azp.indexOf(options.azp) == -1)) {
     return false;
   }
-  return true;
+
+  if (options.isValidCallback) {
+    return options.isValidCallback(dtoken.payload);
+  } else {
+    return true;
+  }
 }
 
 module.exports = validate;

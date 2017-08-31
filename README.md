@@ -190,6 +190,7 @@ Options:
 
 - `aud` - Define the audience that has to exist in the tokens `aud` claim.
 - `azp` - Define the authorized party that has to exist in the tokens `azp` claim.
+- `isValidCallback {function}` - Add a custom function that will be executed for validation. The function receives the payload of the decoded token as an argument.
 
 Example:
 
