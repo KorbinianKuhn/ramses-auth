@@ -38,13 +38,13 @@ test('ramses.validate(): expiration time', function (t) {
     'key': 'value'
   }
   let token = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    lifetime: 300
+    ttl: 300
   });
 
   t.ok(ramses.validate(token, keys.rsaPublicKey), 'not reached expiration time should validate');
 
   token = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    lifetime: -300
+    ttl: -300
   });
 
   t.notOk(ramses.validate(token, keys.rsaPublicKey), 'reached expiration time should not validate');

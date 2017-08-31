@@ -51,12 +51,12 @@ test('ramses.sign(): jti', function (t) {
   t.end();
 });
 
-test('ramses.sign(): lifetime', function (t) {
+test('ramses.sign(): ttl', function (t) {
   const payload = {
     "key": "value"
   }
   const token = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    lifetime: 300
+    ttl: 300
   });
 
   const dtoken = ramses.decode(token);

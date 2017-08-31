@@ -50,7 +50,7 @@ Options:
 
 - `alg {string}` - Parameter name for describing the algorithm<br>Default: `RS256`
 - `jti {boolean}` - Add a unique JWT ID (uuidv4).
-- `lifetime {number}` - Lifetime of the token. The value will be added to the current time and stored as expiration time under the `exp` claim.
+- `ttl {number}` - time to live / lifetime of the token. The value will be added to the current time and stored as expiration time under the `exp` claim.
 - `jpi {string}`
     - `type {string}` - Values (root, parent, chain).
     - `parent {Object}` - The parent token as JWS.
@@ -73,7 +73,7 @@ const token = ramses.sign(
     key: issuer.privateKey,
     options: {
         jti: true,
-        lifetime: 300
+        ttl: 300
     }
 )
 
