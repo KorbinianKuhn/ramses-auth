@@ -1,34 +1,94 @@
-const test = require('tape');
+const assert = require('assert');
 const ramses = require('..');
-const keys = require('./keys/keys')
+const keys = require('./keys')
+const ALGORITHMS = ramses.ALGORITHMS;
 
-const payload = {
-  'key': 'value'
-}
+describe('verify', function () {
+  var token = ramses.sign({
+    param: 'value'
+  }, keys.rsaPrivateKey)
 
-test('ramses.verify()', function (t) {
-  t.notOk(ramses.verify('wrong', keys.rsaPublicKey), 'wrong token should not verify');
-
-  const token = ramses.sign(payload, keys.rsaPrivateKey);
-
-  t.ok(ramses.verify(token, keys.rsaPublicKey), 'correct key should verify');
-  t.notOk(ramses.verify(token, keys.rsaWrongPublicKey), 'wrong key should not verify');
-  t.end();
-});
-
-test('ramses.verify(): alg', function (t) {
-  const correctAlgorithm = 'RS256';
-  const wrongAlgorithm = 'RS384';
-
-  const token = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    alg: correctAlgorithm
+  it('no options should verify', function () {
+    ramses.verify(token, keys.rsaPublicKey, function (err, dtoken) {
+      assert.equal(err, null);
+      assert.equal(dtoken.payload.param, 'value');
+    })
   });
 
-  t.ok(ramses.verify(token, keys.rsaPublicKey, options = {
-    alg: correctAlgorithm
-  }), 'correct algorithm should verify');
-  t.notOk(ramses.verify(token, keys.rsaPublicKey, options = {
-    alg: wrongAlgorithm
-  }), 'wrong algorithm should not verify');
-  t.end();
+  it('invalid token should throw', function () {
+    ramses.verify('wrong', keys.rsaPublicKey, function (err, dtoken) {
+      assert.equal(err.code, 'decoding_error');
+    })
+  });
+
+  it('wrong key should throw', function () {
+    ramses.verify(token, keys.rsaWrongPublicKey, function (err, dtoken) {
+      assert.equal(err.code, 'invalid_token');
+    })
+  });
+
+  it('invalid key should throw', function () {
+    ramses.verify(token, 'wrong', function (err, dtoken) {
+      assert.equal(err.code, 'invalid_key');
+    })
+  });
+
+  it('expired token should throw', function () {
+    var token = ramses.sign({
+      param: 'value'
+    }, keys.rsaPrivateKey, {
+      ttl: -300
+    })
+
+    ramses.verify(token, keys.rsaPublicKey, function (err, dtoken) {
+      assert.equal(err.code, 'expired_token');
+    })
+  });
+
+  it('wrong audience should throw', function () {
+    var token = ramses.sign({
+      param: 'value',
+      aud: ['Audience']
+    }, keys.rsaPrivateKey)
+
+    ramses.verify(token, keys.rsaPublicKey, {
+      aud: 'WrongAudience'
+    }, function (err, dtoken) {
+      assert.equal(err.code, 'wrong_audience');
+    })
+  });
+
+  it('wrong authorized party should throw', function () {
+    var token = ramses.sign({
+      param: 'value',
+      azp: ['AuthorizedParty']
+    }, keys.rsaPrivateKey)
+
+    ramses.verify(token, keys.rsaPublicKey, {
+      azp: 'WrongAuthorizedParty'
+    }, function (err, dtoken) {
+      assert.equal(err.code, 'wrong_authorized_party');
+    })
+  });
+
+  it('custom isValidCallback should throw', function () {
+    ramses.verify(token, keys.rsaPublicKey, {
+      isValidCallback: function (dtoken, done) {
+        done(new Error('custom_error'));
+      }
+    }, function (err, dtoken) {
+      assert.equal(err.message, 'custom_error');
+    })
+  });
+
+  it('custom isValidCallback should verify', function () {
+    ramses.verify(token, keys.rsaPublicKey, {
+      isValidCallback: function (dtoken, done) {
+        done(null, dtoken);
+      }
+    }, function (err, dtoken) {
+      assert.equal(err, null);
+      assert.equal(dtoken.payload.param, 'value');
+    })
+  });
 });

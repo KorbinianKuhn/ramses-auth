@@ -1,11 +1,31 @@
 const jws = require('jws');
 const uuidv4 = require('uuid/v4');
-const error = require('./error');
 const decode = require('./decode');
 const RSA = require('node-rsa');
 const ramses = require('..');
+const RamsesError = require('./errors/RamsesError');
 
-function sign(payload, key, options = {}) {
+function sign(payload, key, options, callback) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
+  } else {
+    options = options || {};
+  }
+
+  function failure(err) {
+    if (callback) {
+      return callback(err);
+    }
+    throw err;
+  }
+
+  if (!key) {
+    return failure(new RamsesError('missing_key', {
+      message: 'Missing parameter key'
+    }));
+  }
+
   let header = {
     alg: 'RS256',
     typ: 'JWT'
@@ -13,7 +33,9 @@ function sign(payload, key, options = {}) {
 
   if (options.alg) {
     if (ramses.ALGORITHMS.indexOf(options.alg) == -1) {
-      throw error("Invalid value for parameter alg", "INVALID_PARAMETER");
+      return failure(new RamsesError('invalid_algorithm', {
+        message: 'Invalid value for parameter alg'
+      }));
     }
     header.alg = options.alg;
   }
@@ -27,10 +49,12 @@ function sign(payload, key, options = {}) {
   }
 
   if (options.jpi) {
-    let jpiType = 'chain';
+    let jpiType = 'root';
     if (options.jpi.type) {
       if (['parent', 'root', 'chain'].indexOf(options.jpi.type) == -1) {
-        throw error("Invalid value for parameter type in options.jpi", "INVALID_VALUE");
+        return failure(new RamsesError('invalid_jpi_type', {
+          message: 'Invalid value for parameter type in options.jpi'
+        }));
       }
       jpiType = options.jpi.type;
     }
@@ -39,11 +63,15 @@ function sign(payload, key, options = {}) {
       const parentTicket = decode(options.jpi.parent);
 
       if (parentTicket === null) {
-        throw error("Decoding error for value of options.jpi.parent", "DECODING_ERROR");
+        return failure(new RamsesError('invalid_parent_ticket', {
+          message: 'Error decoding parent ticket'
+        }));
       }
       if (jpiType === 'parent') {
         if (!parentTicket.payload.jti) {
-          throw error("Missing parameter jti in parent ticket", "MISSING_PARAMETER");
+          return failure(new RamsesError('missing_parent_jti', {
+            message: 'Missing parameter jti in parent ticket'
+          }));
         } else {
           payload.jpi = [parentTicket.payload.jti];
         }
@@ -53,11 +81,15 @@ function sign(payload, key, options = {}) {
         } else if (parentTicket.payload.jti) {
           payload.jpi = [parentTicket.payload.jti];
         } else {
-          throw error("Missing parameter jti or jpi in parent ticket", "MISSING_PARAMETER");
+          return failure(new RamsesError('missing_parent_jti_or_jpi', {
+            message: 'Missing parameter jti or jpi in parent ticket'
+          }));
         }
       } else {
         if (!parentTicket.payload.jti) {
-          throw error("Missing parameter jti in parent ticket", "MISSING_PARAMETER");
+          return failure(new RamsesError('missing_parent_jti', {
+            message: 'Missing parameter jti in parent ticket'
+          }));
         } else {
           if (parentTicket.payload.jpi) {
             payload.jpi = parentTicket.payload.jpi;
@@ -72,33 +104,68 @@ function sign(payload, key, options = {}) {
     }
   }
 
-  if (options.encrypt) {
-    let epd = [];
+  if (options.encrypt && options.encrypt.length > 0) {
+    payload.epd = [];
     for (let i = 0; i < options.encrypt.length; i++) {
       let data = options.encrypt[i];
-      if (data.content && data.alg && ramses.ENCRYPTION_ALGORITHMS.indexOf(data.alg) != -1 && data.aud && data.key) {
-        try {
-          epd.push({
-            aud: data.aud,
-            alg: data.alg,
-            ect: new RSA(data.key).encrypt(data.content, 'base64')
-          })
-        } catch (err) {
-          //Do nothing if encryption failed
-        }
 
+      if (!data.content) {
+        return failure(new RamsesError('missing_encrypt_content', {
+          message: 'Missing parameter content in encryption options'
+        }));
       }
-    }
-    if (epd.length > 0) {
-      payload.epd = epd;
+
+      if (!data.alg) {
+        data.alg = 'RSA';
+      }
+
+      if (ramses.ENCRYPTION_ALGORITHMS.indexOf(data.alg) === -1) {
+        return failure(new RamsesError('invalid_encrypt_algorithm', {
+          message: 'Invalid value for parameter alg in encryption options'
+        }));
+      }
+
+      if (!data.aud) {
+        return failure(new RamsesError('missing_encrypt_audience', {
+          message: 'Missing parameter aud in encryption options'
+        }));
+      }
+
+      if (!data.key) {
+        return failure(new RamsesError('missing_encrypt_key', {
+          message: 'Missing parameter key in encryption options'
+        }));
+      }
+
+      let message;
+      try {
+        message = new RSA(data.key).encrypt(data.content, 'base64');
+      } catch (err) {
+        return failure(new RamsesError('encryption_error', {
+          message: err.message
+        }));
+      }
+
+      payload.epd.push({
+        aud: data.aud,
+        alg: data.alg,
+        ect: message
+      })
+
     }
   }
 
-  return jws.sign({
+  var token = jws.sign({
     header: header,
     payload: payload,
     secret: key
-  })
+  });
+
+  if (callback) {
+    callback(null, token);
+  } else {
+    return token;
+  }
 }
 
 module.exports = sign;

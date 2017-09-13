@@ -1,339 +1,388 @@
-const test = require('tape');
+const assert = require('assert');
 const ramses = require('..');
-const keys = require('./keys/keys')
-
+const keys = require('./keys')
 const ALGORITHMS = ramses.ALGORITHMS;
 
-test('ramses.sign()', function (t) {
-  const payload = {
-    "key": "value"
-  }
-  const token = ramses.sign(payload, keys.rsaPrivateKey);
+describe('sign', function () {
 
-  t.ok(ramses.decode(token), 'correct key should decode');
-  t.ok(ramses.verify(token, keys.rsaPublicKey), 'correct key should verify');
-  t.end();
-});
+  describe('general', function () {
 
-ALGORITHMS.forEach(function (alg) {
-  test('ramses.sign(): algorithm ' + alg, function (t) {
-    const payload = {
-      "key": "value"
-    }
-    const token = ramses.sign(payload, keys.rsaPrivateKey, options = {
-      alg: alg
-    });
-
-    t.ok(ramses.verify(token, keys.rsaPublicKey, algorithm = alg)), 'should verify';
-    t.throws(function () {
-      ramses.sign(payload, keys.rsaPrivateKey, options = {
-        alg: 'invalidAlgorithm'
+    it('missing key should throw', function () {
+      ramses.sign({
+        param: 'value'
+      }, null, function (err) {
+        assert.equal(err.code, 'missing_key');
       });
     });
-    t.end();
-  });
-});
 
-test('ramses.sign(): jti', function (t) {
-  const payload = {
-    "key": "value"
-  }
-  const token = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    jti: true
-  });
-
-  const dtoken = ramses.decode(token);
-  t.ok(('jti' in dtoken.payload), 'jti should exist in payload');
-
-  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  t.ok(dtoken.payload.jti.match(uuidPattern), 'jti should match uuid pattern');
-
-  t.end();
-});
-
-test('ramses.sign(): ttl', function (t) {
-  const payload = {
-    "key": "value"
-  }
-  const token = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    ttl: 300
-  });
-
-  const dtoken = ramses.decode(token);
-
-  t.ok(('exp' in dtoken.payload), 'exp should exist in payload');
-
-  t.end();
-});
-
-test('ramses.sign(): jpi', function (t) {
-  const payload = {
-    "key": "value"
-  }
-  const tokenRoot = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {}
-  });
-  const tokenChildA = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      parent: tokenRoot
-    }
-  });
-  const tokenChildB = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      parent: tokenChildA
-    }
-  });
-
-  const dtokenRoot = ramses.decode(tokenRoot);
-  const dtokenChildA = ramses.decode(tokenChildA);
-  const dtokenChildB = ramses.decode(tokenChildB);
-
-  t.ok((dtokenRoot.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
-  t.ok((dtokenChildA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
-  t.ok((dtokenChildB.payload.jpi.length == 2), 'length of jpi array of childB ticket should be 2');
-
-  t.ok((dtokenChildA.payload.jpi[0] === dtokenRoot.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
-  t.ok((dtokenChildB.payload.jpi[0] === dtokenRoot.payload.jti && dtokenChildB.payload.jpi[1] === dtokenChildA.payload.jti), 'uuids of jpi of childB shoud be uuid of root ticket and childA ticket');
-
-  t.end();
-});
-
-test('ramses.sign(): jpi, type=root', function (t) {
-  const payload = {
-    "key": "value"
-  }
-  const tokenRoot = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      type: 'root'
-    }
-  });
-  const tokenChildA = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      type: 'root',
-      parent: tokenRoot
-    }
-  });
-  const tokenChildB = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      type: 'root',
-      parent: tokenChildA
-    }
-  });
-
-  const dtokenRoot = ramses.decode(tokenRoot);
-  const dtokenChildA = ramses.decode(tokenChildA);
-  const dtokenChildB = ramses.decode(tokenChildB);
-
-  t.ok((dtokenRoot.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
-  t.ok((dtokenChildA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
-  t.ok((dtokenChildB.payload.jpi.length == 1), 'length of jpi array of childB ticket should be 1');
-
-  t.ok((dtokenChildA.payload.jpi[0] === dtokenRoot.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
-  t.ok((dtokenChildB.payload.jpi[0] === dtokenRoot.payload.jti), 'uuid of jpi of childB shoud be uuid of root ticket');
-
-  t.end();
-});
-
-test('ramses.sign(): jpi, type=parent', function (t) {
-  const payload = {
-    "key": "value"
-  }
-  const tokenRoot = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      type: 'parent'
-    }
-  });
-  const tokenChildA = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      type: 'parent',
-      parent: tokenRoot
-    }
-  });
-  const tokenChildB = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      type: 'parent',
-      parent: tokenChildA
-    }
-  });
-
-  const dtokenRoot = ramses.decode(tokenRoot);
-  const dtokenChildA = ramses.decode(tokenChildA);
-  const dtokenChildB = ramses.decode(tokenChildB);
-
-  t.ok((dtokenRoot.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
-  t.ok((dtokenChildA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
-  t.ok((dtokenChildB.payload.jpi.length == 1), 'length of jpi array of childB ticket should be 1');
-
-  t.ok((dtokenChildA.payload.jpi[0] === dtokenRoot.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
-  t.ok((dtokenChildB.payload.jpi[0] === dtokenChildA.payload.jti), 'uuid of jpi of childB shoud be uuid of childA ticket');
-
-  t.end();
-});
-
-test('ramses.sign(): jpi, type=chain', function (t) {
-
-  const tokenRoot = ramses.sign({
-    "key": "value"
-  }, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      type: 'chain'
-    }
-  });
-  const tokenChildA = ramses.sign({
-    "key": "value"
-  }, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      type: 'chain',
-      parent: tokenRoot
-    }
-  });
-  const tokenChildB = ramses.sign({
-    "key": "value"
-  }, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      type: 'chain',
-      parent: tokenChildA
-    }
-  });
-  const tokenParentWithoutJpi = ramses.sign({
-    "key": "value"
-  }, keys.rsaPrivateKey, options = {
-    jti: true
-  });
-  const tokenChildC = ramses.sign({
-    "key": "value"
-  }, keys.rsaPrivateKey, options = {
-    jti: true,
-    jpi: {
-      type: 'chain',
-      parent: tokenParentWithoutJpi
-    }
-  });
-
-  const dtokenRoot = ramses.decode(tokenRoot);
-  const dtokenChildA = ramses.decode(tokenChildA);
-  const dtokenChildB = ramses.decode(tokenChildB);
-  const dtokenParentWithoutJpi = ramses.decode(tokenParentWithoutJpi);
-  const dtokenChildC = ramses.decode(tokenChildC);
-
-  t.ok((dtokenRoot.payload.jpi.length == 0), 'length of jpi array of root ticket should be empty');
-  t.ok((dtokenChildA.payload.jpi.length == 1), 'length of jpi array of childA ticket should be 1');
-  t.ok((dtokenChildB.payload.jpi.length == 2), 'length of jpi array of childB ticket should be 2');
-  t.ok((dtokenChildC.payload.jpi.length == 1), 'length of jpi array of childC ticket should be 1');
-
-  t.ok((dtokenChildA.payload.jpi[0] === dtokenRoot.payload.jti), 'uuid of jpi of childA shoud be uuid of root ticket');
-  t.ok((dtokenChildB.payload.jpi[0] === dtokenRoot.payload.jti && dtokenChildB.payload.jpi[1] === dtokenChildA.payload.jti), 'uuids of jpi of childB shoud be uuid of root ticket and childA ticket');
-  t.ok((dtokenChildC.payload.jpi[0] === dtokenParentWithoutJpi.payload.jti), 'uuid of jpi of childC shoud be uuid of parent without jpi ticket');
-
-  t.end();
-});
-
-test('ramses.sign(): jpi, throw errors', function (t) {
-  const payload = {
-    "key": "value"
-  }
-  const tokenWithoutJti = ramses.sign(payload, keys.rsaPrivateKey);
-
-  t.throws(function () {
-    ramses.sign(payload, keys.rsaPrivateKey, options = {
-      jpi: {
-        type: 'invalid type'
-      }
+    it('correct params should decode', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {}, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.equal(dtoken.payload.param, 'value');
+      });
     });
+
   });
-  t.throws(function () {
-    ramses.sign(payload, keys.rsaPrivateKey, options = {
-      jpi: {
-        type: 'parent',
-        parent: 'invalidticket'
-      }
+
+  describe('optional parameters', function () {
+
+    it('correct alg should sign', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        alg: 'RS512'
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.equal(dtoken.header.alg, 'RS512');
+      });
     });
-  });
-  t.throws(function () {
-    ramses.sign(payload, keys.rsaPrivateKey, options = {
-      jpi: {
-        type: 'parent',
-        parent: tokenWithoutJti
-      }
+
+    it('wrong algorithm should throw', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        alg: 'wrong'
+      }, function (err) {
+        assert.equal(err.code, 'invalid_algorithm');
+      });
     });
-  });
-  t.throws(function () {
-    ramses.sign(payload, keys.rsaPrivateKey, options = {
-      jpi: {
-        type: 'root',
-        parent: tokenWithoutJti
-      }
+
+    it('jti should match uuid pattern', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jti: true
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        assert.equal(err, null);
+        assert.ok(dtoken.payload.jti.match(uuidPattern));
+      });
     });
-  });
-  t.throws(function () {
-    ramses.sign(payload, keys.rsaPrivateKey, options = {
-      jpi: {
-        type: 'chain',
-        parent: tokenWithoutJti
-      }
+
+    it('ttl should create exp in claim payload', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        ttl: 300
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.ok(dtoken.payload.exp);
+      });
     });
+
   });
 
-  t.end();
-});
+  describe('jpi options', function () {
+    it('wrong jpi type should throw', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          type: 'wrong'
+        }
+      }, function (err) {
+        assert.equal(err.code, 'invalid_jpi_type');
+      });
+    });
 
-test('ramses.sign(): encrypt', function (t) {
-  const payload = {
-    "key": "value"
-  }
-  const token = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    encrypt: [{
-      aud: ['Audience'],
-      alg: 'RSA',
-      key: keys.rsaPublicKey,
-      content: 'correct message'
-    }]
+    var parent = ramses.sign({
+      param: 'value'
+    }, keys.rsaPrivateKey);
+
+    it('missing jti in parent ticket should throw (jti type parent)', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          type: 'parent',
+          parent: parent
+        }
+      }, function (err) {
+        assert.equal(err.code, 'missing_parent_jti');
+      });
+    });
+
+    it('missing jti or jpi in parent ticket should throw (jti type root)', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          type: 'root',
+          parent: parent
+        }
+      }, function (err) {
+        assert.equal(err.code, 'missing_parent_jti_or_jpi');
+      });
+    });
+
+    it('missing jti or jpi in parent ticket should throw (jti type chain)', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          type: 'chain',
+          parent: parent
+        }
+      }, function (err) {
+        assert.equal(err.code, 'missing_parent_jti');
+      });
+    });
+
+    it('invalid parent ticket should throw', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          type: 'parent',
+          parent: 'wrong'
+        }
+      }, function (err) {
+        assert.equal(err.code, 'invalid_parent_ticket');
+      });
+    });
+
+    it('ticket should contain parent jti', function () {
+      var parent_token = ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jti: true
+      });
+      var parent_dtoken = ramses.decode(parent_token);
+
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          parent: parent_token
+        }
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.equal(dtoken.payload.jpi.length, 1);
+        assert.equal(dtoken.payload.jpi.indexOf(parent_dtoken.payload.jti), 0);
+      });
+    });
+
+    it('ticket should contain parent jti (jpi type parent)', function () {
+      var parent_token = ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jti: true
+      });
+      var parent_dtoken = ramses.decode(parent_token);
+
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          type: 'parent',
+          parent: parent_token
+        }
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.equal(dtoken.payload.jpi.length, 1);
+        assert.equal(dtoken.payload.jpi.indexOf(parent_dtoken.payload.jti), 0);
+      });
+    });
+
+    it('ticket should contain parent jpi (jpi type root)', function () {
+      var parent_token = ramses.sign({
+        jpi: ['d4bec8aa-9aa8-452a-aaaf-036451d53b91']
+      }, keys.rsaPrivateKey, {
+        jti: true
+      });
+      var parent_dtoken = ramses.decode(parent_token);
+
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          type: 'root',
+          parent: parent_token
+        }
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.equal(dtoken.payload.jpi.length, 1);
+        assert.equal(dtoken.payload.jpi.indexOf('d4bec8aa-9aa8-452a-aaaf-036451d53b91'), 0);
+      });
+    });
+
+    it('ticket should contain parent jti (jpi type root)', function () {
+      var parent_token = ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jti: true
+      });
+      var parent_dtoken = ramses.decode(parent_token);
+
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          type: 'root',
+          parent: parent_token
+        }
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.equal(dtoken.payload.jpi.length, 1);
+        assert.equal(dtoken.payload.jpi.indexOf(parent_dtoken.payload.jti), 0);
+      });
+    });
+
+    it('ticket should contain parent jpi and jti (jpi type chain)', function () {
+      var parent_token = ramses.sign({
+        jpi: ['d4bec8aa-9aa8-452a-aaaf-036451d53b91']
+      }, keys.rsaPrivateKey, {
+        jti: true
+      });
+      var parent_dtoken = ramses.decode(parent_token);
+
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          type: 'chain',
+          parent: parent_token
+        }
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.equal(dtoken.payload.jpi.length, 2);
+      });
+    });
+
+    it('ticket should contain parent jti (jpi type chain)', function () {
+      var parent_token = ramses.sign({}, keys.rsaPrivateKey, {
+        jti: true
+      });
+      var parent_dtoken = ramses.decode(parent_token);
+
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          type: 'chain',
+          parent: parent_token
+        }
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.equal(dtoken.payload.jpi.length, 1);
+      });
+    });
+
+    it('ticket should contain empty jpi chain (jpi type chain without parent)', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jpi: {
+          type: 'chain'
+        }
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.equal(dtoken.payload.jpi.length, 0);
+      });
+    });
+
   });
 
-  const dtoken = ramses.decode(token, options = {
-    decrypt: {
-      aud: 'Audience',
-      key: keys.rsaPrivateKey
-    }
+  describe('encryption', function () {
+
+    it('missing parameter content should throw', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        encrypt: [{
+
+        }]
+      }, function (err, token) {
+        assert.equal(err.code, 'missing_encrypt_content');
+      });
+    });
+
+    it('invalid parameter alg should throw', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        encrypt: [{
+          content: 'test',
+          alg: 'wrong'
+        }]
+      }, function (err, token) {
+        assert.equal(err.code, 'invalid_encrypt_algorithm');
+      });
+    });
+
+    it('missing parameter aud should throw', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        encrypt: [{
+          content: 'test',
+        }]
+      }, function (err, token) {
+        assert.equal(err.code, 'missing_encrypt_audience');
+      });
+    });
+
+    it('missing parameter key should throw', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        encrypt: [{
+          content: 'test',
+          aud: ['Audience']
+        }]
+      }, function (err, token) {
+        assert.equal(err.code, 'missing_encrypt_key');
+      });
+    });
+
+    it('invalid parameter key should throw', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        encrypt: [{
+          content: 'test',
+          aud: ['Audience'],
+          key: 'wrong'
+        }]
+      }, function (err, token) {
+        assert.equal(err.code, 'encryption_error');
+      });
+    });
+
+    it('should contain encrypted content', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        encrypt: [{
+          content: 'test',
+          aud: ['Audience'],
+          key: keys.rsaPublicKey
+        }]
+      }, function (err, token) {
+        dtoken = ramses.decode(token, {
+          decrypt: {
+            aud: 'Audience',
+            key: keys.rsaPrivateKey
+          }
+        });
+        assert.equal(err, null);
+        assert.equal(dtoken.payload.epd[0].dct, 'test');
+      });
+    });
+
   });
 
-  t.ok(dtoken.payload.epd[0].dct === 'correct message', 'dct should exist in epd');
-  t.end();
-});
-
-test('ramses.sign(): encrypt', function (t) {
-  const payload = {
-    "key": "value"
-  }
-
-  const tokenWrong = ramses.sign(payload, keys.rsaPrivateKey, options = {
-    encrypt: [{
-      aud: ['Audience'],
-      alg: 'wrongAlgorithm',
-      key: keys.rsaPublicKey,
-      content: 'correct message'
-    }]
-  });
-
-  const dtokenWrong = ramses.decode(tokenWrong, options = {
-    decrypt: {
-      aud: 'Audience',
-      key: keys.rsaPrivateKey
-    }
-  });
-
-  t.ok(!dtokenWrong.payload.epd, 'no epd should exist');
-  t.end();
 });

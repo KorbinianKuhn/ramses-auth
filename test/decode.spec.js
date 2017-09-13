@@ -1,37 +1,59 @@
-const test = require('tape');
+const assert = require('assert');
 const ramses = require('..');
-const keys = require('./keys/keys');
+const keys = require('./keys')
+const ALGORITHMS = ramses.ALGORITHMS;
 
-test('ramses.decode()', function (t) {
-  const payload = {
-    key: 'value',
-    epd: [{
-      aud: ['Audience'],
-      alg: "RSA-OEAP",
-      ect: "1asdknaslkndaskdnas"
-    }]
-  }
-  const token = ramses.sign(payload, keys.rsaPrivateKey);
+describe('decode', function () {
+  var token = ramses.sign({
+    param: 'value'
+  }, keys.rsaPrivateKey)
 
-  t.ok(ramses.decode(token, options = {
-    decrypt: {
-      aud: 'Audience',
-      key: keys.rsaPublicKey
+  it('invalid token should return null', function () {
+    assert.equal(ramses.decode('wrong'), null);
+  });
+
+  it('correct key should decrypt encrypted content', function () {
+    const payload = {
+      key: 'value'
     }
-  }), 'correct decryption data should validate');
-  t.throws(function () {
-    ramses.decode(token, options = {
+    token = ramses.sign(
+      payload, keys.rsaPrivateKey, {
+        encrypt: [{
+          aud: ['Audience'],
+          content: "secret",
+          key: keys.rsaPublicKey
+        }]
+      }
+    )
+    dtoken = ramses.decode(token, {
       decrypt: {
-        key: keys.rsaPublicKey
+        aud: 'Audience',
+        key: keys.rsaPrivateKey
       }
     });
+    assert.equal(dtoken.payload.epd[0].dct, 'secret');
   });
-  t.throws(function () {
-    ramses.decode(token, options = {
+
+  it('wrong key should not decrypt encrypted content', function () {
+    const payload = {
+      key: 'value'
+    }
+    token = ramses.sign(
+      payload, keys.rsaPrivateKey, {
+        encrypt: [{
+          aud: ['Audience'],
+          content: "secret",
+          key: keys.rsaPublicKey
+        }]
+      }
+    )
+    dtoken = ramses.decode(token, {
       decrypt: {
-        aud: 'Audience'
+        aud: 'Audience',
+        key: keys.rsaWrongPrivateKey
       }
     });
+    assert.equal(dtoken.payload.epd[0].dct, undefined);
   });
-  t.end();
+
 });

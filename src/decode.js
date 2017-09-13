@@ -1,18 +1,17 @@
 const jws = require('jws');
-const error = require('./error');
 const RSA = require('node-rsa');
 const ramses = require('..');
+const RamsesError = require('./errors/RamsesError');
 
-function decode(signature, options = {}) {
-  let dtoken = jws.decode(signature);
-  if (options.decrypt && dtoken.payload.epd) {
-    if (!options.decrypt.aud) {
-      throw error('Missing parameter aud in options.decrypt', 'MISSING PARAMETER');
-    }
-    if (!options.decrypt.key) {
-      throw error('Missing parameter key in options.decrypt', 'MISSING PARAMETER');
-    }
+function decode(signature, options) {
+  var dtoken = jws.decode(signature);
+  if (dtoken === null) {
+    return null;
+  }
 
+  options = options || {};
+
+  if (options.decrypt && dtoken.payload.epd && options.decrypt.aud && options.decrypt.key) {
     dtoken.payload.dct = [];
     for (let i = 0; i < dtoken.payload.epd.length; i++) {
       let epd = dtoken.payload.epd[i];
@@ -25,6 +24,7 @@ function decode(signature, options = {}) {
       }
     }
   }
+
   return dtoken;
 }
 

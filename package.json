@@ -4,11 +4,8 @@
   "description": "RAMSES - Robust Access Model for Securing Exposed Services",
   "main": "index.js",
   "scripts": {
-    "precoverage": "rm -rf coverage",
-    "coverage": "NODE_ENV=test istanbul cover tape -- test/**/*.spec.js",
-    "lint": "standard",
-    "start": "watch 'npm test' src test --wait 5 --interval 1",
-    "test": "NODE_ENV=test tape test/**/*.spec.js"
+    "test": "mocha ./test/**/*.spec.js",
+    "coverage": "nyc --reporter=html mocha ./test/**/*.spec.js"
   },
   "repository": {
     "type": "git",
@@ -34,7 +31,7 @@
     "uuid": "^3.1.0"
   },
   "devDependencies": {
-    "istanbul": "^0.4.5",
-    "tape": "^4.8.0"
+    "mocha": "^3.5.3",
+    "nyc": "^11.2.1"
   }
 }

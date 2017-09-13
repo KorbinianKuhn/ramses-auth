@@ -37,7 +37,7 @@ $ git clone https://github.com/KorbinianKuhn/ramses-auth
 
 ## Usage
 
-#### `ramses.sign(payload, key, options)`
+#### `ramses.sign(payload, key, [options, callback])`
 
 Return a JSON Web Signature.
 
@@ -65,39 +65,22 @@ Options:
 Example:
 
 ``` js
-//Sign a token with a unique id and a lifetime of 5 minutes
-const token = ramses.sign(
-    payload: {
-        key:'value'
-    },
-    key: issuer.privateKey,
-    options: {
-        jti: true,
-        ttl: 300
+//Sign a token with a unique id and a lifetime of 5 minutes and a parent ticket
+const payload = {key: 'value'};
+const options = {
+    jti: true,
+    ttl: 300,
+    jpi: {
+        parent: token
     }
-)
+};
 
-//Sign a token with a parent
-const tokenWithParent = ramses.sign(
-    payload: {
-        key:'value'
-    },
-    key: issuer.privateKey,
-    options: {
-        jti: true,
-        jpi: {
-            parent: token
-        }
-    }
-)
+ramses.sign(payload, issuer.privateKey, options, function(err, token) {
+    console.log(token);
+});
 
 //Sign a token with encrypted content for the audience
-const token = ramses.sign(
-    payload: {
-        aud: ['Audience']
-    },
-    key: issuer.privateKey,
-    options: {
+const token = ramses.sign(payload, issuer.privateKey, {
         encrypt: [
             {
                 aud: ['Audience'],
@@ -107,11 +90,12 @@ const token = ramses.sign(
                 }
             }
         ]
-    }
-)
+    }, function(err, token) {
+        console.log(token);
+});
 ```
 
-#### `ramses.verify(token, key, options)`
+#### `ramses.verify(token, key, [options, callback])`
 
 Verify a JWS token. Returns `true` or `false`.
 
@@ -122,28 +106,29 @@ Options:
 
 `options`
 
-- `alg` - Define the algorithm for a better performance as the verify function does not have to encode the JWS to extract the algorithm from the jose header.
+- `aud` - Define the audience that has to exist in the tokens `aud` claim.
+- `azp` - Define the authorized party that has to exist in the tokens `azp` claim.
+- `isValidCallback {function}` - Add a custom function that will be executed for validation. The function receives the payload of the decoded token as an argument.
 
 Example:
 
 ``` js
 //Verify token
-const valid = ramses.verify(
-    token: token,
-    key: issuer.publicKey
-)
+ramses.verify(token, issuer.publicKey, function(err, dtoken) {
+    console.log(err);
+});
 
-//Verify token and set algorithm for better performance
-const valid = ramses.verify(
-    token: token,
-    key: issuer.publicKey,
-    options: {
-        alg: 'RS256'
-    }
-)
+//Verify token with all options
+ramses.verify(token, issuer.publicKey, {
+        aud: 'Audience',
+        azp: 'AuthorizedParty',
+        isValidCallback: customCallbackFunction
+    }, function(err, dtoken) {
+        console.log(err);
+});
 ```
 
-#### `ramses.decode(token, options)`
+#### `ramses.decode(token [, options])`
 
 Return a decoded JWS. The returned object contains `header`, `payload` and `signature`.
 
@@ -177,41 +162,6 @@ const dtoken = ramses.decode(
 )
 ```
 
-#### `ramses.validate(token, key, options)`
-
-Validate a token. Returns `true` or `false`.
-
-Options:
-
-- `token {String}` - The token as JWS.
-- `key {String}` - The public key of token issuer.
-
-`options`
-
-- `aud` - Define the audience that has to exist in the tokens `aud` claim.
-- `azp` - Define the authorized party that has to exist in the tokens `azp` claim.
-- `isValidCallback {function}` - Add a custom function that will be executed for validation. The function receives the payload of the decoded token as an argument.
-
-Example:
-
-``` js
-//Validate a token
-let isValid = ramses.validate(
-    token: token,
-    key: issuer.publicKey
-)
-
-//Validate a token and check audience and authorized party
-let isValid = ramses.validate(
-    token: token,
-    key: issuer.publicKey,
-    options: {
-        aud: 'Audience',
-        azp: 'Authorized Party'
-    }
-)
-```
-
 ## Testing
 
 First you have to install all dependencies:
@@ -224,12 +174,6 @@ To execute all unit tests once, use:
 
 ```
 $ npm test
-```
-
-or to run tests based on file watcher, use:
-
-```
-$ npm start
 ```
 
 To get information about the test coverage, use:
