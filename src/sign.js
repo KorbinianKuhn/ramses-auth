@@ -3,7 +3,7 @@ const uuidv4 = require('uuid/v4');
 const decode = require('./decode');
 const RSA = require('node-rsa');
 const ramses = require('..');
-const RamsesError = require('./errors/RamsesError');
+const UnauthorizedError = require('./errors/UnauthorizedError');
 
 function sign(payload, key, options, callback) {
   if (typeof options === 'function') {
@@ -21,7 +21,7 @@ function sign(payload, key, options, callback) {
   }
 
   if (!key) {
-    return failure(new RamsesError('missing_key', {
+    return failure(new UnauthorizedError('missing_key', {
       message: 'Missing parameter key'
     }));
   }
@@ -33,7 +33,7 @@ function sign(payload, key, options, callback) {
 
   if (options.alg) {
     if (ramses.ALGORITHMS.indexOf(options.alg) == -1) {
-      return failure(new RamsesError('invalid_algorithm', {
+      return failure(new UnauthorizedError('invalid_algorithm', {
         message: 'Invalid value for parameter alg'
       }));
     }
@@ -52,7 +52,7 @@ function sign(payload, key, options, callback) {
     let jpiType = 'root';
     if (options.jpi.type) {
       if (['parent', 'root', 'chain'].indexOf(options.jpi.type) == -1) {
-        return failure(new RamsesError('invalid_jpi_type', {
+        return failure(new UnauthorizedError('invalid_jpi_type', {
           message: 'Invalid value for parameter type in options.jpi'
         }));
       }
@@ -63,13 +63,13 @@ function sign(payload, key, options, callback) {
       const parentTicket = decode(options.jpi.parent);
 
       if (parentTicket === null) {
-        return failure(new RamsesError('invalid_parent_ticket', {
+        return failure(new UnauthorizedError('invalid_parent_ticket', {
           message: 'Error decoding parent ticket'
         }));
       }
       if (jpiType === 'parent') {
         if (!parentTicket.payload.jti) {
-          return failure(new RamsesError('missing_parent_jti', {
+          return failure(new UnauthorizedError('missing_parent_jti', {
             message: 'Missing parameter jti in parent ticket'
           }));
         } else {
@@ -81,13 +81,13 @@ function sign(payload, key, options, callback) {
         } else if (parentTicket.payload.jti) {
           payload.jpi = [parentTicket.payload.jti];
         } else {
-          return failure(new RamsesError('missing_parent_jti_or_jpi', {
+          return failure(new UnauthorizedError('missing_parent_jti_or_jpi', {
             message: 'Missing parameter jti or jpi in parent ticket'
           }));
         }
       } else {
         if (!parentTicket.payload.jti) {
-          return failure(new RamsesError('missing_parent_jti', {
+          return failure(new UnauthorizedError('missing_parent_jti', {
             message: 'Missing parameter jti in parent ticket'
           }));
         } else {
@@ -110,7 +110,7 @@ function sign(payload, key, options, callback) {
       let data = options.encrypt[i];
 
       if (!data.content) {
-        return failure(new RamsesError('missing_encrypt_content', {
+        return failure(new UnauthorizedError('missing_encrypt_content', {
           message: 'Missing parameter content in encryption options'
         }));
       }
@@ -120,19 +120,19 @@ function sign(payload, key, options, callback) {
       }
 
       if (ramses.ENCRYPTION_ALGORITHMS.indexOf(data.alg) === -1) {
-        return failure(new RamsesError('invalid_encrypt_algorithm', {
+        return failure(new UnauthorizedError('invalid_encrypt_algorithm', {
           message: 'Invalid value for parameter alg in encryption options'
         }));
       }
 
       if (!data.aud) {
-        return failure(new RamsesError('missing_encrypt_audience', {
+        return failure(new UnauthorizedError('missing_encrypt_audience', {
           message: 'Missing parameter aud in encryption options'
         }));
       }
 
       if (!data.key) {
-        return failure(new RamsesError('missing_encrypt_key', {
+        return failure(new UnauthorizedError('missing_encrypt_key', {
           message: 'Missing parameter key in encryption options'
         }));
       }
@@ -141,7 +141,7 @@ function sign(payload, key, options, callback) {
       try {
         message = new RSA(data.key).encrypt(data.content, 'base64');
       } catch (err) {
-        return failure(new RamsesError('encryption_error', {
+        return failure(new UnauthorizedError('encryption_error', {
           message: err.message
         }));
       }

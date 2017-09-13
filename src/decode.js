@@ -1,7 +1,6 @@
 const jws = require('jws');
 const RSA = require('node-rsa');
 const ramses = require('..');
-const RamsesError = require('./errors/RamsesError');
 
 function decode(signature, options) {
   var dtoken = jws.decode(signature);

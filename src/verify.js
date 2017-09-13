@@ -1,6 +1,6 @@
 const jwa = require('jwa');
 const decode = require('./decode');
-const RamsesError = require('./errors/RamsesError');
+const UnauthorizedError = require('./errors/UnauthorizedError');
 const ALGORITHMS = require('./algorithms');
 
 function verify(token, key, options, callback) {
@@ -22,7 +22,7 @@ function verify(token, key, options, callback) {
 
   const dtoken = decode(token);
   if (dtoken === null) {
-    return done(new RamsesError('decoding_error', {
+    return done(new UnauthorizedError('decoding_error', {
       message: 'Error decoding token'
     }));
   }
@@ -36,29 +36,29 @@ function verify(token, key, options, callback) {
     const algo = jwa(dtoken.header.alg);
     valid = algo.verify(content, signature, key);
   } catch (err) {
-    return done(new RamsesError('invalid_key', {
+    return done(new UnauthorizedError('invalid_key', {
       message: err.message
     }));
   }
 
   if (!valid) {
-    return done(new RamsesError('invalid_token', {
+    return done(new UnauthorizedError('invalid_token', {
       message: 'Token is invalid'
     }));
   }
 
   if (dtoken.payload.exp && dtoken.payload.exp < Math.floor(new Date().getTime() / 1000)) {
-    return done(new RamsesError('expired_token', {
+    return done(new UnauthorizedError('expired_token', {
       message: 'Token has expired'
     }));
   }
   if (options.aud && (!dtoken.payload.aud || dtoken.payload.aud.indexOf(options.aud) == -1)) {
-    return done(new RamsesError('wrong_audience', {
+    return done(new UnauthorizedError('wrong_audience', {
       message: 'Wrong audience'
     }));
   }
   if (options.azp && (!dtoken.payload.azp || dtoken.payload.azp.indexOf(options.azp) == -1)) {
-    return done(new RamsesError('wrong_authorized_party', {
+    return done(new UnauthorizedError('wrong_authorized_party', {
       message: 'Wrong authorized party'
     }));
   }
