@@ -14,7 +14,8 @@ function decode(signature, options) {
     dtoken.payload.dct = [];
     for (let i = 0; i < dtoken.payload.epd.length; i++) {
       let epd = dtoken.payload.epd[i];
-      if (epd.aud && epd.alg && ramses.ENCRYPTION_ALGORITHMS.indexOf(epd.alg) != -1 && epd.ect && epd.aud.indexOf(options.decrypt.aud) != -1) {
+      if (epd.aud && epd.alg && ramses.ENCRYPTION_ALGORITHMS.indexOf(epd.alg) != -1 && epd.ect && epd.aud.indexOf(
+          options.decrypt.aud) != -1) {
         try {
           dtoken.payload.epd[i].dct = new RSA(options.decrypt.key).decrypt(epd.ect, 'utf8');
         } catch (err) {

@@ -49,7 +49,8 @@ Options:
 `options`
 
 - `alg {string}` - Parameter name for describing the algorithm<br>Default: `RS256`
-- `jti {boolean}` - Add a unique JWT ID (uuidv4).
+- `jti {boolean}` - Add a unique JWT ID (uuidv4). Default true.
+- `iat {boolean}` - Add issued at timestamp. Default true.
 - `ttl {number}` - time to live / lifetime of the token. The value will be added to the current time and stored as expiration time under the `exp` claim.
 - `jpi {string}`
     - `type {string}` - Values (root, parent, chain).

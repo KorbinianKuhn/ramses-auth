@@ -54,15 +54,60 @@ describe('sign', function () {
     it('jti should match uuid pattern', function () {
       ramses.sign({
         param: 'value'
-      }, keys.rsaPrivateKey, {
-        jti: true
-      }, function (err, token) {
+      }, keys.rsaPrivateKey, {}, function (err, token) {
         dtoken = ramses.decode(token);
-        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        const uuidPattern =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         assert.equal(err, null);
         assert.ok(dtoken.payload.jti.match(uuidPattern));
       });
     });
+
+    it('jti should not be set', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        jti: false
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.equal(dtoken.payload.jti, undefined);
+      });
+    })
+
+    it('iat should be integer by default', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {}, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.ok(Number.isInteger(dtoken.payload.iat));
+      });
+    })
+
+    it('iat should be integer', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        iat: true
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.ok(Number.isInteger(dtoken.payload.iat));
+      });
+    })
+
+    it('iat should not be set', function () {
+      ramses.sign({
+        param: 'value'
+      }, keys.rsaPrivateKey, {
+        iat: false
+      }, function (err, token) {
+        dtoken = ramses.decode(token);
+        assert.equal(err, null);
+        assert.equal(dtoken.payload.iat, undefined);
+      });
+    })
 
     it('ttl should create exp in claim payload', function () {
       ramses.sign({
@@ -93,22 +138,25 @@ describe('sign', function () {
 
     var parent = ramses.sign({
       param: 'value'
-    }, keys.rsaPrivateKey);
+    }, keys.rsaPrivateKey, {
+      jti: false
+    });
 
-    it('missing jti in parent ticket should throw (jti type parent)', function () {
+    it('missing jti in parent ticket should throw (jpi type parent)', function () {
       ramses.sign({
         param: 'value'
       }, keys.rsaPrivateKey, {
         jpi: {
           type: 'parent',
           parent: parent
-        }
+        },
+        jti: false
       }, function (err) {
         assert.equal(err.code, 'missing_parent_jti');
       });
     });
 
-    it('missing jti or jpi in parent ticket should throw (jti type root)', function () {
+    it('missing jti or jpi in parent ticket should throw (jpi type root)', function () {
       ramses.sign({
         param: 'value'
       }, keys.rsaPrivateKey, {
@@ -121,7 +169,7 @@ describe('sign', function () {
       });
     });
 
-    it('missing jti or jpi in parent ticket should throw (jti type chain)', function () {
+    it('missing jti or jpi in parent ticket should throw (jpi type chain)', function () {
       ramses.sign({
         param: 'value'
       }, keys.rsaPrivateKey, {

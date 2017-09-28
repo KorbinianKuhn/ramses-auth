@@ -40,8 +40,12 @@ function sign(payload, key, options, callback) {
     header.alg = options.alg;
   }
 
-  if (options.jti) {
+  if (options.jti === undefined || options.jti === true) {
     payload.jti = uuidv4();
+  }
+
+  if (options.iat === undefined || options.iat === true) {
+    payload.iat = Math.floor(new Date().getTime() / 1000);
   }
 
   if (options.ttl) {
